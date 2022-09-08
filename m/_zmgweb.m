@@ -188,6 +188,7 @@ header(headers)  ;
   s crlf=$c(13,10)
   s header="HTTP/1.1 200 OK"_crlf
   s header=header_"Content-type: application/json"_crlf
+  s header=header_"Access-Control-Allow-Origin: *"_crlf
   i $d(headers) d
   . n key
   . s key=""
