@@ -27,7 +27,8 @@ RUN apt-get install -y \
   apache2-dev \
   libelf1 \
   libtinfo5 \
-  lsof
+  lsof \
+  libssl-dev
 
 # Create app directory
 RUN mkdir -p /opt/mgweb \
@@ -85,8 +86,8 @@ RUN mkdir /tmp/tmp \
   && chmod +x ydbinstall.sh \
   && ./ydbinstall.sh --utf8 default --verbose --force-install \
   && export ydb_gbldir=/opt/yottadb/yottadb.gld \
-  && /usr/local/lib/yottadb/r130/mumps -run ^GDE < /opt/mgweb/gde.txt \
-  && /usr/local/lib/yottadb/r130/mupip create
+  && /usr/local/lib/yottadb/r134/mumps -run ^GDE < /opt/mgweb/gde.txt \
+  && /usr/local/lib/yottadb/r134/mupip create
 
 # Install and configure the network mgsi interface code to allow
 # network access to YottaDB (default setup uses
@@ -94,19 +95,22 @@ RUN mkdir /tmp/tmp \
 
 RUN git clone https://github.com/chrisemunt/mgsi /opt/mgweb/mgsi \
   && cp /opt/mgweb/mgsi/yottadb/* /opt/mgweb/m \
+  && mkdir /opt/mgweb/unix \
+  && cp /opt/mgweb/mgsi/unix/* /opt/mgweb/unix \
+  && sed -i 's/130/134/g' /opt/mgweb/ydb_run_temp \
   && /opt/mgweb/ydb_run_temp ylink^%zmgsi \
   && rm -r /opt/mgweb/mgsi \
-  && cp /opt/mgweb/mg_web/unix/zmgsi.ci /usr/local/lib/yottadb/r130
+  && cp /opt/mgweb/unix/zmgsi.ci /usr/local/lib/yottadb/r134
 
 # Set up the xinetd interface for optional network access
 # to YottaDB
 
-RUN cp /opt/mgweb/mg_web/unix/zmgsi_ydb /usr/local/lib/yottadb/r130 \
-  && cp /opt/mgweb/mg_web/unix/zmgsi_xinetd /etc/xinetd.d/zmgsi_xinetd \
-  && cp /opt/mgweb/mg_web/unix/zmgsi.ci /usr/local/lib/yottadb/r130 \
-  && sed -i 's/122/130/g' /etc/xinetd.d/zmgsi_xinetd \
-  && sed -i 's/122/130/g' /usr/local/lib/yottadb/r130/zmgsi_ydb \
-  && sed -i 's/1.22/1.30/g' /usr/local/lib/yottadb/r130/zmgsi_ydb \
+RUN cp /opt/mgweb/unix/zmgsi_ydb /usr/local/lib/yottadb/r134 \
+  && cp /opt/mgweb/unix/zmgsi_xinetd /etc/xinetd.d/zmgsi_xinetd \
+  && cp /opt/mgweb/unix/zmgsi.ci /usr/local/lib/yottadb/r134 \
+  && sed -i 's/122/134/g' /etc/xinetd.d/zmgsi_xinetd \
+  && sed -i 's/122/134/g' /usr/local/lib/yottadb/r134/zmgsi_ydb \
+  && sed -i 's/1.22/1.34/g' /usr/local/lib/yottadb/r134/zmgsi_ydb \
   && echo "zmgsi_xinetd          7041/tcp                        # zmgsi" >> /etc/services
 
 # Pre-load the %zmgweb* routines to prevent
